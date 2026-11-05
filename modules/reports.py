@@ -288,8 +288,8 @@ def pdf_individual(alumno: Alumno, tests: Sequence[TestConfig], resultados: Sequ
         centro = [Paragraph("UNIVERSIDAD AUTÓNOMA BENITO JUÁREZ DE OAXACA", ParagraphStyle("k", parent=h3, alignment=1, fontSize=6.6, spaceAfter=3)),
                   Paragraph("Reporte de Evaluación Integral" if informe else "Evaluación Diagnóstica FCA",
                             ParagraphStyle("h1c", parent=h1, alignment=1)),
-                  Paragraph("Evaluación Diagnóstica FCA · Especialidades de Contaduría Pública" if informe
-                            else "Especialidades de Contaduría Pública · Reporte de resultados",
+                  Paragraph("Evaluación Diagnóstica FCA · Especialidades en Lic. Contaduría Pública" if informe
+                            else "Especialidades en Lic. Contaduría Pública · Reporte de resultados",
                             ParagraphStyle("h3c", parent=h3, alignment=1, fontSize=8.5))]
         t = Table([[logo(LOGOS[0]), centro, logo(LOGOS[1])]], colWidths=[2.9 * cm, ancho - 5.8 * cm, 2.9 * cm])
         t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("ALIGN", (0, 0), (0, 0), "LEFT"),
@@ -440,7 +440,7 @@ def pdf_individual(alumno: Alumno, tests: Sequence[TestConfig], resultados: Sequ
     buf = io.BytesIO()
     SimpleDocTemplate(buf, pagesize=letter, leftMargin=margen, rightMargin=margen, topMargin=1.5 * cm,
                       bottomMargin=1.5 * cm, title=f"Resultados {alumno.matricula}",
-                      author="Evaluación Diagnóstica FCA · Especialidades de Contaduría Pública").build(historia)
+                      author="Evaluación Diagnóstica FCA · Especialidades en Lic. Contaduría Pública").build(historia)
     return buf.getvalue()
 
 
@@ -542,7 +542,7 @@ def excel_individual(alumno: Alumno, tests: Sequence[TestConfig], resultados: Se
             c.fill = PatternFill("solid", fgColor=fondo)
         hoja.row_dimensions[fila].height = max(18, 15 * (len(texto) // ancho_car + 1))
 
-    ws["A1"] = "Reporte de Evaluación Integral" if informe else "Evaluación Diagnóstica FCA · Especialidades de Contaduría Pública - Reporte de resultados"
+    ws["A1"] = "Reporte de Evaluación Integral" if informe else "Evaluación Diagnóstica FCA · Especialidades en Lic. Contaduría Pública - Reporte de resultados"
     ws["A1"].font = Font(bold=True, size=14, color="1B3A8C" if informe else None)
     datos = [("Alumno", _seguro(alumno.nombre_completo)), ("Matrícula", alumno.matricula),
              ("Semestre", alumno.semestre), ("Edad", alumno.edad), ("Tutor / orientador", _seguro(alumno.tutor)),

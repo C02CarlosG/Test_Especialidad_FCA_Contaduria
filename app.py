@@ -9,7 +9,7 @@ from views import paginas
 
 RAIZ = Path(__file__).parent
 
-st.set_page_config(page_title="Evaluación Diagnóstica FCA · Especialidades de Contaduría Pública", page_icon="🎓", layout="centered")
+st.set_page_config(page_title="Evaluación Diagnóstica FCA · Especialidades en Lic. Contaduría Pública", page_icon="🎓", layout="centered")
 
 
 @st.cache_resource

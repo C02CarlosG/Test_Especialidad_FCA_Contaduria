@@ -20,7 +20,7 @@ def pagina_alumno(cargar: Callable, aviso_md: str, secreto: Callable, cliente_ip
         log.exception("Configuración incompleta")
         tema.aplicar()
         tema.marca()
-        st.title("Evaluación Diagnóstica FCA · Especialidades de Contaduría Pública")
+        st.title("Evaluación Diagnóstica FCA · Especialidades en Lic. Contaduría Pública")
         st.error("El test no está disponible por el momento. Avisa a tu docente.")
         return
     # El alumno ve y descarga sus resultados al terminar, salvo que [app] MOSTRAR_RESULTADO_AL_ALUMNO sea false.

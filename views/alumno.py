@@ -18,7 +18,7 @@ from views import tema, test
 
 log = logging.getLogger(__name__)
 
-TITULO = "Evaluación Diagnóstica FCA · Especialidades de Contaduría Pública"
+TITULO = "Evaluación Diagnóstica FCA · Especialidades en Lic. Contaduría Pública"
 SUBTITULO = "Test Big Five & Orientación Vocacional en Contaduría Pública"
 ZONA = ZoneInfo("America/Mexico_City")
 SEMESTRES = ("Primer semestre", "Segundo semestre", "Tercer semestre", "Cuarto semestre", "Quinto semestre",

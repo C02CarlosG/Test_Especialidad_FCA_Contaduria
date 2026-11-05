@@ -14,5 +14,5 @@ def test_app_abre_sin_excepciones():
     at.secrets["supabase"] = {"url": "https://x.supabase.co", "service_role_key": "REEMPLAZAR"}
     at.run()
     assert not at.exception
-    assert at.title[0].value == "Evaluación Diagnóstica FCA · Especialidades de Contaduría Pública"
+    assert at.title[0].value == "Evaluación Diagnóstica FCA · Especialidades en Lic. Contaduría Pública"
     assert any("no está disponible" in e.value for e in at.error)
