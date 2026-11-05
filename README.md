@@ -1,7 +1,7 @@
-# Evaluación Diagnóstica FCA
+# Evaluación Diagnóstica FCA · Contaduría Pública
 
-Aplicación web para que estudiantes mayores de edad de la Facultad de Contaduría y Administración (UABJO)
-contesten, desde su celular, dos tests —**Test 1: The Big Five** y **Test 2: Administration Specialties**— y
+Aplicación web para que estudiantes mayores de edad de la Licenciatura en Contaduría Pública de la Facultad de Contaduría y Administración (UABJO)
+contesten, desde su celular, dos tests —**Test 1: The Big Five** y **Test 2: Public Accounting Specialties**— y
 reciban una guía de **qué especialidad podría convenirles**. El docente ve el avance de todos, descarga los
 reportes y genera el código QR de acceso.
 
@@ -50,13 +50,12 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-**1. Base de datos.** En Supabase abre **SQL Editor → New query** y ejecuta, en este orden, el contenido de
-[`sql/01_esquema.sql`](sql/01_esquema.sql) y luego el de [`sql/02_rls.sql`](sql/02_rls.sql). El segundo activa la
+**1. Base de datos.** En Supabase abre **SQL Editor → New query** y ejecuta [`sql/00_instalacion_completa.sql`](sql/00_instalacion_completa.sql) (o, por separado y en este orden, el contenido de
+[`sql/01_esquema.sql`](sql/01_esquema.sql) y luego el de [`sql/02_rls.sql`](sql/02_rls.sql)). El segundo activa la
 seguridad por filas sin políticas públicas: nadie puede leer ni escribir con la clave pública; la app usa la
 `service_role key` desde el servidor.
 
-> **Si la base ya existía** (instalada antes de pedir el semestre), ejecuta también [`sql/03_semestre.sql`](sql/03_semestre.sql)
-> en el SQL Editor **antes de desplegar**: agrega la columna `semestre`. Sin ella, el registro falla. Es seguro repetirlo.
+> Esta base es nueva, así que **no** necesitas `sql/03_semestre.sql` (el esquema ya incluye `semestre`).
 
 **2. Secretos.** Copia la plantilla y llena los valores (el archivo real está en `.gitignore`):
 
@@ -70,7 +69,6 @@ cp .streamlit/secrets.toml.example .streamlit/secrets.toml
 | `[supabase]` | `service_role_key` | Clave de servidor (Settings → API). **Nunca** en el navegador ni en el repositorio |
 | `[admin]` | `password` | Contraseña del panel `/admin`: mínimo 12 caracteres, larga y única |
 | `[app]` | `public_url` | URL pública de la app (la que lleva el QR) |
-| `[app]` | `carrera` | `administracion` (por defecto) o `contaduria`: elige los tests de `config/tests` o `config/contaduria/tests` y el subtítulo |
 | `[app]` | `MOSTRAR_RESULTADO_AL_ALUMNO` | `true` (por defecto): el alumno ve y descarga sus resultados; `false`: solo el docente |
 
 **3. Correr la app y las pruebas.**
@@ -82,26 +80,20 @@ python3 -m pytest -q        # unas 500 pruebas; no necesitan Supabase
 
 Algunas pruebas usan herramientas opcionales (`pdftotext`, `pdfimages`, `zbarimg`) y se omiten si no están.
 
-## Dos carreras, un mismo código
+## Esta es la versión de Contaduría Pública
 
-El código es el mismo para **Administración** y **Contaduría Pública**; cambian los tests y la base de datos:
+Este repositorio es independiente del de Administración (misma base de código, otros tests y **otra base de datos**).
+Las especialidades son **Contabilidades Especializadas, Auditorías Especializadas, Derecho Fiscal y Administración
+Financiera**. Los tests están en [`config/tests/`](config/tests); las calculadoras originales, en
+[`docs/referencia_contaduria/`](docs/referencia_contaduria), y
+[`scripts/convertir_tests_contaduria.py`](scripts/convertir_tests_contaduria.py) las convierte. Los Excel de
+Administración que hay en `tests/datos_admin/` son solo datos de prueba de las pruebas automáticas.
 
-| | Administración | Contaduría Pública |
-|---|---|---|
-| `[app] carrera` | `administracion` (o vacío) | `contaduria` |
-| Tests | [`config/tests/`](config/tests) | [`config/contaduria/tests/`](config/contaduria/tests) |
-| Campos | Mercadotecnia, Capital Humano, Adm. Financiera, Negocios Int., Emprendimiento | Contabilidades Esp., Auditorías Esp., Derecho Fiscal, Adm. Financiera |
-| Base de datos | su proyecto de Supabase | **otro proyecto de Supabase**, con los mismos scripts de `sql/` |
-
-Para publicar Contaduría: crea un proyecto nuevo en Supabase y ejecuta `sql/01_esquema.sql` y `sql/02_rls.sql` (el
-`03` ya viene incluido en el `01`); crea una segunda app en Streamlit Cloud con el mismo repositorio y rama, y en sus
-Secrets pon las claves del proyecto nuevo, otra contraseña de `/admin`, su `public_url` y `carrera = "contaduria"`.
-Las calculadoras de Contaduría están en [`docs/referencia_contaduria/`](docs/referencia_contaduria) y
-[`scripts/convertir_tests_contaduria.py`](scripts/convertir_tests_contaduria.py) las convierte.
+**Conexión con Supabase: [`docs/supabase_contaduria.md`](docs/supabase_contaduria.md)** (paso a paso).
 
 ## Los tests (archivos Excel)
 
-Cada test es un `.xlsx` en la carpeta de la carrera (p. ej. [`config/tests/`](config/tests)). El alumno los contesta en el **orden alfabético** del
+Cada test es un `.xlsx` en [`config/tests/`](config/tests). El alumno los contesta en el **orden alfabético** del
 nombre de archivo, que además es el id del test (minúsculas, números, `_` o `-`, hasta 40 caracteres).
 
 | Hoja | Columnas | |
@@ -154,7 +146,7 @@ casos recalculados en LibreOffice (`scripts/generar_golden_scoring.py`, `tests/g
 1. Une el PR a `main` en GitHub (o despliega desde la rama que quieras probar).
 2. En [share.streamlit.io](https://share.streamlit.io) entra con GitHub → **Create app**. Si el repositorio es
    privado, autoriza el acceso.
-3. Repositorio `C02CarlosG/Test_Especialidad_FCA`, rama `main`, archivo principal `app.py`, y una URL corta
+3. Repositorio `TU-USUARIO/Test_Especialidad_FCA_Contaduria`, rama `main`, archivo principal `app.py`, y una URL corta
    (será la del QR).
 4. En **Advanced settings** elige Python 3.12 o 3.13 y pega en **Secrets** el contenido de tu `secrets.toml`.
 5. **Deploy.** Revisa que `/` muestre el registro con los logos, que `/admin` pida la contraseña y que un
@@ -216,11 +208,13 @@ views/                  pantallas: alumno.py, test.py, informe.py (hoja de resul
 modules/                lógica: acceso, avance, scoring, interpretacion, graficas, panel, reports, reports_admin, admin_auth,
                         security, qr_utils, config_loader, db (única capa que habla con Supabase)
 config/                 aviso_privacidad.md y tests/*.xlsx
-sql/                    01_esquema.sql y 02_rls.sql
+sql/                    00_instalacion_completa.sql (todo en uno), 01_esquema.sql, 02_rls.sql y 03_semestre.sql
 static/                 logos y tipografías, servidos con enableStaticServing
 scripts/                conversión de las calculadoras y generación de los casos de verificación
 tests/                  pruebas automáticas (golden/ = casos calculados con las hojas de Excel)
-docs/referencia/        calculadoras originales
+docs/referencia_contaduria/  calculadoras originales de Contaduría
+docs/supabase_contaduria.md  conexión con Supabase, paso a paso
+tests/datos_admin/      Excel de Administración, solo como datos de prueba
 docs/prueba_piloto.md   lista de verificación de la prueba piloto (celulares reales)
 PLAN.md                 plan por fases y decisiones tomadas
 ```

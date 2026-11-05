@@ -19,7 +19,7 @@ from views import tema, test
 log = logging.getLogger(__name__)
 
 TITULO = "Evaluación Diagnóstica FCA"
-SUBTITULO = "Test Big Five & Orientación Vocacional en Administración"
+SUBTITULO = "Test Big Five & Orientación Vocacional en Contaduría Pública"
 ZONA = ZoneInfo("America/Mexico_City")
 SEMESTRES = ("Primer semestre", "Segundo semestre", "Tercer semestre", "Cuarto semestre", "Quinto semestre",
              "Sexto semestre", "Séptimo semestre", "Octavo semestre")  # del 1.º al 8.º: SEMESTRE_MINIMO..SEMESTRE_MAXIMO

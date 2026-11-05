@@ -16,7 +16,7 @@ from modules.reports import (FILAS_ENCABEZADO as OFF, excel_individual, grafica_
 from modules.scoring import calificar
 
 RAIZ = Path(__file__).resolve().parent.parent
-TEST1, TEST2 = load_all_tests(RAIZ / "config" / "tests")
+TEST1, TEST2 = load_all_tests(RAIZ / "tests" / "datos_admin")
 GOLDEN = json.loads((Path(__file__).parent / "golden" / "scoring_golden.json").read_text(encoding="utf-8"))
 FECHA = datetime(2026, 10, 15)
 

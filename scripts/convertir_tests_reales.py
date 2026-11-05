@@ -15,7 +15,7 @@ import pandas as pd
 
 RAIZ = Path(__file__).resolve().parent.parent
 REF = RAIZ / "docs" / "referencia"
-DESTINO = RAIZ / "config" / "tests"
+DESTINO = RAIZ / "tests" / "datos_admin"  # solo datos de prueba: esta app es de Contaduría
 POR_BLOQUE = 10
 # Códigos de las especialidades de la carrera; los comparten los dos tests (sirven para compararlos).
 CODIGOS_ESPECIALIDAD = {"Mercadotecnia": "MKT", "Capital Humano": "CH", "Administración Financiera": "AF",

@@ -17,7 +17,7 @@ from modules.reports import excel_individual, pdf_individual
 from modules.scoring import calificar
 
 RAIZ = Path(__file__).resolve().parent.parent
-TEST1, TEST2 = load_all_tests(RAIZ / "config" / "tests")
+TEST1, TEST2 = load_all_tests(RAIZ / "tests" / "datos_admin")
 GOLDEN = json.loads((Path(__file__).parent / "golden" / "scoring_golden.json").read_text(encoding="utf-8"))
 
 
@@ -131,7 +131,7 @@ def test_la_pantalla_muestra_la_hoja_de_resultados_con_los_dos_tests_reales():
         from modules.scoring import calificar
         from views import informe, tema
         from modules.interpretacion import construir
-        t = load_all_tests(raiz / "config" / "tests")
+        t = load_all_tests(raiz / "tests" / "datos_admin")
         g = json.loads((raiz / "tests" / "golden" / "scoring_golden.json").read_text(encoding="utf-8"))
         r = [calificar(t[0], g["test1"][40]["respuestas"]),
              calificar(t[1], {k: (None if v == "SE" else v) for k, v in g["test2"][20]["respuestas"].items()})]

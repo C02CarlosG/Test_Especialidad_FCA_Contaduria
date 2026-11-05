@@ -11,7 +11,7 @@ from modules.config_loader import load_all_tests
 from modules.panel import cargar_panel, sincronizar_resultados
 
 RAIZ = Path(__file__).resolve().parent.parent
-TEST1, TEST2 = load_all_tests(RAIZ / "config" / "tests")
+TEST1, TEST2 = load_all_tests(RAIZ / "tests" / "datos_admin")
 GOLDEN = json.loads((Path(__file__).parent / "golden" / "scoring_golden.json").read_text(encoding="utf-8"))
 AHORA = datetime(2026, 10, 15, 9, 0, tzinfo=timezone.utc)
 

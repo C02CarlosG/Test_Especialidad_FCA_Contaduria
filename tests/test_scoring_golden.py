@@ -10,7 +10,7 @@ from modules.scoring import calificar
 
 RAIZ = Path(__file__).resolve().parent.parent
 GOLDEN = json.loads((Path(__file__).parent / "golden" / "scoring_golden.json").read_text(encoding="utf-8"))
-TEST1, TEST2 = load_all_tests(RAIZ / "config" / "tests")
+TEST1, TEST2 = load_all_tests(RAIZ / "tests" / "datos_admin")
 
 
 def _resp(respuestas):

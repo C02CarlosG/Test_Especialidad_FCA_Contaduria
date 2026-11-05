@@ -5,7 +5,7 @@ import pytest
 
 from modules.config_loader import ConfigError, load_all_tests, load_test_config
 
-CARPETA = Path(__file__).resolve().parent.parent / "config" / "tests"
+CARPETA = Path(__file__).resolve().parent.parent / "tests" / "datos_admin"
 
 
 def _escribir(ruta, esp=None, pre=None, esc=None, omitir=()):
