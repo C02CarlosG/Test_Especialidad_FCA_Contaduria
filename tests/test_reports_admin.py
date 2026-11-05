@@ -148,4 +148,4 @@ def test_el_concentrado_lleva_logos_solo_en_la_portada(panel):
     for nombre in ("Alumnos", "Resultados", "Respuestas"):
         assert len(wb[nombre]._images) == 0                      # las hojas de datos empiezan en la fila 1
         assert wb[nombre].cell(1, 1).value in ("Matrícula",)     # encabezado en la fila 1: filtros y tablas dinámicas
-    assert wb["Resumen"].cell(OFF + 1, 1).value == "Evaluación Diagnóstica FCA - Concentrado"
+    assert wb["Resumen"].cell(OFF + 1, 1).value == "Evaluación Diagnóstica FCA · Especialidades de Contaduría Pública - Concentrado"

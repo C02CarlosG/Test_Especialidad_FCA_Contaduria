@@ -2,11 +2,11 @@
 
 ### Responsable
 
-La Universidad Autónoma “Benito Juárez” de Oaxaca (UABJO), con domicilio en Av. Universidad, S/N. Colonia Cinco Señores. Edificio “A” de Rectoría, C.P. 68050, Oaxaca de Juárez, Oax., a través de la Coordinación Académica de la Licenciatura en Administración y el Cuerpo Académico “Gestión e Innovación de las Organizaciones” dependiente de la Dirección de la Facultad de Contaduría y Administración (FCA), es la entidad responsable del uso y protección de los datos personales que se recaben con motivo del registro, acceso y uso de la herramienta tecnológica de acompañamiento denominada “Evaluación Integral de Personalidad y Vocación de Campos Formativos”
+La Universidad Autónoma “Benito Juárez” de Oaxaca (UABJO), con domicilio en Av. Universidad, S/N. Colonia Cinco Señores. Edificio “A” de Rectoría, C.P. 68050, Oaxaca de Juárez, Oax., a través de la Coordinación Académica de la Licenciatura en Contaduría Pública y el Cuerpo Académico “Gestión e Innovación de las Organizaciones” dependiente de la Dirección de la Facultad de Contaduría y Administración (FCA), es la entidad responsable del uso y protección de los datos personales que se recaben con motivo del registro, acceso y uso de la herramienta tecnológica de acompañamiento denominada “Evaluación Integral de Personalidad y Vocación de Campos Formativos”
 
 ### Descripción General del Servicio
 
-La herramienta “Evaluación Integral de Personalidad y Vocación de Campos Formativos” es una aplicación web diseñada para ofrecer información, acompañamiento y orientación vocacional mediante una guía de dos cuestionarios y un reporte de orientación, respecto a las especialidades de la Licenciatura en Administración, al alumnado de la Facultad de Contaduría y Administración de la UABJO, con la finalidad de brindar apoyo en la elección informada de campos formativos y facilitar su proceso de aprendizaje. Su funcionamiento se realiza en tiempo real, pudiendo utilizar infraestructura tecnología de proveedores externos.
+La herramienta “Evaluación Integral de Personalidad y Vocación de Campos Formativos” es una aplicación web diseñada para ofrecer información, acompañamiento y orientación vocacional mediante una guía de dos cuestionarios y un reporte de orientación, respecto a las especialidades de la Licenciatura en Contaduría Pública, al alumnado de la Facultad de Contaduría y Administración de la UABJO, con la finalidad de brindar apoyo en la elección informada de campos formativos y facilitar su proceso de aprendizaje. Su funcionamiento se realiza en tiempo real, pudiendo utilizar infraestructura tecnología de proveedores externos.
 
 ### Fundamento Legal que Faculta el Tratamiento
 
@@ -33,9 +33,9 @@ El tratamiento de los datos personales por parte de la Universidad Autónoma “
 
 Los datos que se generan y recaban mediante la interacción con la herramienta se utilizan para:
 
-1. Brindar una mejor orientación y resolver las consultas académicas de las personas usuarias, con la posibilidad de personalizar la experiencia mediante el uso de un nombre o número de matrícula.
-2. Realizar mejoras en la calidad y precisión de “Evaluación Integral de Personalidad y Vocación de Campos Formativos”, optimizando su desempeño con base en el análisis de las interacciones.
-3. Generar estadísticas y reportes para medir el uso y efectividad del servicio, sin identificar a personas usuarias de manera individual ni asociar las interacciones a datos que permitan su identificación.
+1. Brindar una mejor orientación y apoyar la elección informada de especialidad de las personas usuarias, identificando sus respuestas mediante el nombre y el número de matrícula.
+2. Realizar mejoras en la calidad y precisión de “Evaluación Integral de Personalidad y Vocación de Campos Formativos”, optimizando su desempeño con base en el análisis de las respuestas.
+3. Generar estadísticas y reportes para medir el uso y efectividad del servicio, sin identificar a personas usuarias de manera individual ni asociar las respuestas a datos que permitan su identificación.
 4. Generar Reporte de Evaluación Integral.
 
 **Mecanismo para la negativa de finalidades:** Si la persona titular no desea que sus datos sean tratados para las finalidades secundarias, podrá manifestarlo desde su ingreso o mediante correo dirigido a la Unidad de Transparencia (transparencia@uabjo.mx), sin que ello condicione el acceso a la herramienta.
@@ -46,20 +46,14 @@ Las categorías de datos personales que puede recabar el personal de la Coordina
 
 - **Datos personales de identificación:** Nombre y apellidos.
 - **Datos personales académicos:** Número de matrícula, licenciatura y semestre educativo en curso
-- **Interacciones conversacionales:** Registro de los textos enviados durante las consultas.
-- **Exclusión de datos sensibles y audio:** No se recaban ni tratan datos personales sensibles, asi mismo en ningún caso se almacenarán registros de voz en formato de audio.
-
-### Uso de Servicios de Inteligencia Artificial
-
-Al interactuar con la “Evaluación Integral de Personalidad y Vocación de Campos Formativos”, parte de la información ingresada por la persona usuaria podrá ser procesada en servidores de terceros, que pueden estar ubicados fuera del territorio nacional y esto implica políticas de privacidad adicionales propias de dichos proveedores.
-
-La confidencialidad y protección de los datos personales están garantizados de conformidad con lo establecido en la Ley General de Protección de Datos Personales en Posesión de Sujetos Obligados y demás ordenamientos aplicables.
+- **Resultados de los cuestionarios:** Respuestas a los dos cuestionarios y el reporte de orientación generado.
+- **Exclusión de datos sensibles:** No se recaban ni tratan datos personales sensibles.
 
 ### Transferencias de Datos
 
-La información de las interacciones podrá compartirse internamente con áreas técnicas o académicas de la Facultad de Contaduría y Administración (FCA) para supervisar la calidad del servicio o implementar mejoras.
+La información de los resultados podrá compartirse internamente con áreas técnicas o académicas de la Facultad de Contaduría y Administración (FCA) para supervisar la calidad del servicio o implementar mejoras.
 
-No se transfiere información a terceros ajenos a la Universidad y al proveedor de tecnología de IA, salvo obligación legal o requerimiento de autoridad competente.
+No se transfiere información a terceros ajenos a la Universidad y a los proveedores de infraestructura tecnológica que alojan la herramienta, salvo obligación legal o requerimiento de autoridad competente.
 
 En ningún caso se difundirán ni se compartirán datos con fines distintos a los establecidos en este Aviso, salvo consentimiento expreso o disposición legal.
 
