@@ -74,7 +74,7 @@ def test_2() -> None:
     escala.append(("SE", ws.cell(19, 2).value))
     niveles = [("categoria", 0.8, "ALTO (Perfil Fuerte)"), ("categoria", 0.5, "MEDIO (En Desarrollo)"),
                ("categoria", 0, "BAJO (Baja Afinidad)")]
-    base.escribir(DESTINO / "2_test_orientacion_especialidades.xlsx", "Test 2: Especialidades de Contaduría Pública",
+    base.escribir(DESTINO / "2_test_orientacion_especialidades.xlsx", "Test 2: Especialidades Lic. en Contaduría Pública",
                   ws["A10"].value.strip(), esp, preguntas, escala, niveles)
 
 
