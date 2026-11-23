@@ -6,7 +6,9 @@ dos tests y reciban una guía de especialidad. Es una copia **independiente** de
 
 ## Comandos
 - `streamlit run app.py` — alumno en `/`, docente en `/admin` (necesita `.streamlit/secrets.toml`).
-- `python -m pytest -q` — unas 535 pruebas; no necesitan Supabase.
+- `python -m pytest -q` — unas 636 pruebas; no necesitan Supabase.
+- `python scripts/importar_alumnos_autorizados.py` — carga a Supabase la lista de alumnos autorizados
+  (`ALUMNOS DE 5o. SEMESTRE Licenciatura.md`, 303 alumnos de Contaduría; está en `.gitignore`: son datos personales).
 - `python scripts/convertir_tests_contaduria.py` — regenera `config/tests/*.xlsx` desde `docs/referencia_contaduria/`.
 
 ## Qué es de Contaduría y qué no
@@ -18,7 +20,9 @@ dos tests y reciban una guía de especialidad. Es una copia **independiente** de
 - Cambiar preguntas o escala con alumnos contestando los bloquea (ver README, «Los tests»).
 
 ## Reglas
-- Base de datos propia: `sql/00_instalacion_completa.sql` y `docs/supabase_contaduria.md`. Nunca uses las
+- Misma funcionalidad que Administración (acceso solo con matrícula autorizada, correo y envío del PDF por SMTP,
+  matrícula de 1 a 10 dígitos). Lo propio de Contaduría: tests, `modules/institucion.py`, otra base de datos.
+- Base de datos propia: `sql/00_instalacion_completa.sql` (ya incluye `alumnos_autorizados` y el correo/envío) y `docs/supabase_contaduria.md`. Nunca uses las
   claves del proyecto de Administración ni subas `.streamlit/secrets.toml`.
 - Modelo de calificación igual al de Administración (afinidad con pesos iguales, sin los pesos 0.4/0.3/0.3 de la
   plantilla). Cambiarlo toca `modules/scoring.py` e `interpretacion.py`.

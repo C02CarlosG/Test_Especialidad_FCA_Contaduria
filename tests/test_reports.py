@@ -69,8 +69,11 @@ def test_pdf_es_valido_y_contiene_los_datos(resultados):
     if not shutil.which("pdftotext"):
         pytest.skip("pdftotext no está instalado: solo se validó la estructura del PDF")
     texto = subprocess.run(["pdftotext", "-layout", "-", "-"], input=pdf, capture_output=True, check=True).stdout.decode()
-    for esperado in ("123456", "Ana Pérez López", "Test 1: The Big Five", "Dónde coinciden tus dos tests", "15/10/2026",
-                     "no constituyen un diagnóstico", "Test 2: Administration Specialties"):
+    texto = " ".join(texto.split())  # una frase puede partirse de línea en el PDF
+    for esperado in ("123456", "Ana Pérez López", "Test 1: Rasgos de la Personalidad", "Dónde coinciden tus dos tests", "15/10/2026",
+                     "No constituyen un diagnóstico", "Test 2: Especialidades Lic. en Administración",
+                     "Facultad de Contaduría y Administración - UABJO", "Coordinación Académica Licenciatura en Contaduría Pública",
+                     "Cuerpo Académico Gestión e Innovación de las Organizaciones"):
         assert esperado in texto
     for e in resultados[0].especialidades:
         assert e.nombre in texto
@@ -157,7 +160,7 @@ def test_radar_con_un_solo_eje_con_dato_no_falla(resultados):
 
 def test_el_radar_conserva_su_proporcion_en_el_pdf(resultados, tmp_path):
     from modules.reports import dimensiones_png
-    png = grafica_radar(resultados, ["Test 1: The Big Five", "Test 2: Administration Specialties"])
+    png = grafica_radar(resultados, ["Test 1: Rasgos de la Personalidad", "Test 2: Especialidades Lic. en Administración"])
     w, h = dimensiones_png(png)
     assert w > 300 and h > 300 and abs(w / h - 1.0) < 0.6
     if shutil.which("pdfimages"):
@@ -204,8 +207,8 @@ def test_el_pdf_lleva_un_logo_a_cada_lado_del_titulo(resultados, tmp_path):
     # cada logo es una imagen RGB más su máscara de transparencia (smask)
     filas = [l.split() for l in salida.splitlines()[2:] if l.strip()]  # columnas: página, n.º, tipo, ancho, alto...
     imagenes = [(f[3], f[4]) for f in filas if f[2] == "image"]
-    assert imagenes == [("165", "240"), ("240", "240")]  # FCA a la izquierda, Gestión a la derecha
-    assert sum(f[2] == "smask" for f in filas) == 2  # el fondo transparente se conserva
+    assert imagenes[:2] == [("165", "240"), ("240", "240")]  # FCA a la izquierda, Gestión a la derecha; después, las gráficas
+    assert [f[2] for f in filas[:4]] == ["image", "smask"] * 2  # el fondo transparente de los logos se conserva
 
 
 def test_el_excel_individual_lleva_los_logos_a_cada_lado_en_todas_las_hojas(resultados):

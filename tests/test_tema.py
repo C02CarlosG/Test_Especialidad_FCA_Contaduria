@@ -40,7 +40,10 @@ def test_el_camino_marca_hecho_actual_y_pendiente():
     assert h0.index('class="logo fca"') < h0.index('class="inst"') < h0.index('class="logo gestion"')
     assert h0.count('src="data:image/png;base64,') == 2  # incrustados: no dependen de rutas del servidor
     assert 'alt="Facultad de Contaduría y Administración, Calidad Académica"' in h0
-    assert "Universidad Autónoma Benito Juárez de Oaxaca" in h0
+    # tres líneas: facultad (el guion no queda al inicio de línea), coordinación y cuerpo académico
+    assert '<span class="nombre">Facultad de Contaduría y Administración\u00a0- UABJO</span>' in h0
+    assert '<span class="coord">Coordinación Académica Licenciatura en Contaduría Pública</span>' in h0
+    assert '<span class="area">Cuerpo Académico Gestión e Innovación de las Organizaciones</span>' in h0
 
 
 def test_los_textos_de_datos_se_escapan(tmp_path):

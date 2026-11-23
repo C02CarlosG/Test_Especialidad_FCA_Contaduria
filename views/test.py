@@ -17,8 +17,10 @@ from modules.acceso import Alumno
 from modules.avance import (AvanceError, Posicion, RepositorioAvance, calcular_posicion,
                             guardar_bloque)
 from modules.config_loader import TestConfig
+from modules.institucion import APP
 from modules.interpretacion import construir as construir_informe
-from modules.reports import AVISO, excel_individual, grafica_radar, pdf_individual, vista_conjunta
+from modules.envio import ConfigCorreo, entregar_reporte
+from modules.reports import AVISO, grafica_radar, pdf_individual, vista_conjunta
 from modules.resultados import resultados_del_alumno
 from modules.scoring import ResultadoTest
 from views import informe as vista_informe, tema
@@ -43,7 +45,7 @@ def _opciones(test: TestConfig) -> tuple[list, dict]:
 def _encabezado(pos: Posicion, tests: Sequence[TestConfig]) -> None:
     test = pos.test
     tema.cabecera(tests, pos.numero_test)
-    st.title("Evaluación Diagnóstica FCA · Especialidades en Lic. Contaduría Pública")
+    st.title(APP)
     st.subheader(test.titulo)
     st.progress(pos.contestadas / len(test.preguntas),
                 text=f"Bloque {pos.numero_bloque} de {pos.total_bloques} · "
@@ -65,12 +67,8 @@ def _nota(r: ResultadoTest) -> str | None:
 
 def _descargas(alumno: Alumno, archivos: dict) -> None:
     st.info("Descarga tus resultados ahora: al cerrar esta página ya no podrás volver a consultarlos aquí.")
-    c1, c2 = st.columns(2)
-    c1.download_button("Descargar PDF", archivos["pdf"], file_name=f"resultados_{alumno.matricula}.pdf",
+    st.download_button("Descargar PDF", archivos["pdf"], file_name=f"resultados_{alumno.matricula}.pdf",
                        mime="application/pdf", width="stretch", type="primary", on_click="ignore")
-    c2.download_button("Descargar Excel", archivos["xlsx"], file_name=f"resultados_{alumno.matricula}.xlsx",
-                       mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                       width="stretch", on_click="ignore")
 
 
 def _mostrar_resultados(alumno: Alumno, tests: Sequence[TestConfig], resultados: list[ResultadoTest],
@@ -118,9 +116,17 @@ def _mostrar_resultados(alumno: Alumno, tests: Sequence[TestConfig], resultados:
     _descargas(alumno, archivos)
 
 
-def _fin(repo: RepositorioAvance, alumno: Alumno, tests: Sequence[TestConfig], mostrar: bool) -> None:
+def _avisar_envio(alumno: Alumno, estado: str | None) -> None:
+    if estado == "enviado":
+        st.info(f"Te enviamos tu reporte a {alumno.correo}. Revisa también la carpeta de spam.")
+    elif estado == "error":
+        st.warning("No pudimos enviarte el correo; tu tutor podrá reenviártelo. Puedes descargar tu PDF aquí.")
+
+
+def _fin(repo: RepositorioAvance, alumno: Alumno, tests: Sequence[TestConfig], mostrar: bool,
+         correo: ConfigCorreo | None = None) -> None:
     tema.cabecera(tests, len(tests) + 1)
-    st.title("Evaluación Diagnóstica FCA · Especialidades en Lic. Contaduría Pública")
+    st.title(APP)
     st.success("¡Terminaste! Tus respuestas quedaron guardadas.")
     if not mostrar:
         st.write("Gracias por tu participación. Tu tutor u orientador te compartirá los resultados. "
@@ -133,22 +139,24 @@ def _fin(repo: RepositorioAvance, alumno: Alumno, tests: Sequence[TestConfig], m
             resultados = resultados_del_alumno(repo, alumno, tests)
             fecha = datetime.now(ZONA)
             pdf = pdf_individual(alumno, tests, resultados, fecha)
-            xlsx = excel_individual(alumno, tests, resultados, fecha)
         except Exception:
             log.exception("No se pudieron generar los resultados del alumno")
             st.error("Tus respuestas están guardadas, pero no pudimos generar tus resultados ahora. "
                      "Pulsa Reintentar; si sigue fallando, tu tutor podrá entregarte tus resultados.")
             st.button("Reintentar", type="primary")  # al pulsarlo, Streamlit vuelve a ejecutar esta pantalla
             return
-        archivos.update(resultados=resultados, pdf=pdf, xlsx=xlsx)
+        archivos.update(resultados=resultados, pdf=pdf)
+    if correo is not None and "envio" not in archivos:  # una sola vez por sesión; la reserva en la BD cubre varias pestañas
+        archivos["envio"] = entregar_reporte(repo, alumno, lambda: archivos["pdf"], correo)
+    _avisar_envio(alumno, archivos.get("envio"))
     _mostrar_resultados(alumno, tests, archivos["resultados"], archivos)
 
 
 def render(repo: RepositorioAvance, alumno: Alumno, tests: Sequence[TestConfig],
-           mostrar_resultados: bool = True) -> None:
+           mostrar_resultados: bool = True, correo: ConfigCorreo | None = None) -> None:
     if mostrar_resultados and "pdf" in st.session_state.get(f"archivos-{alumno.id}", {}):
         # Ya terminó y sus resultados están en memoria: no hace falta consultar la BD en cada rerun.
-        _fin(repo, alumno, tests, mostrar_resultados)
+        _fin(repo, alumno, tests, mostrar_resultados, correo)
         return
     try:
         pos = calcular_posicion(repo, alumno, tests)
@@ -161,7 +169,7 @@ def render(repo: RepositorioAvance, alumno: Alumno, tests: Sequence[TestConfig],
         st.button("Reintentar", type="primary")
         return
     if pos is None:
-        _fin(repo, alumno, tests, mostrar_resultados)
+        _fin(repo, alumno, tests, mostrar_resultados, correo)
         return
 
     if st.session_state.pop("reanudado", False):

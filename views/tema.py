@@ -14,8 +14,9 @@ from typing import Sequence
 
 import streamlit as st
 
-INSTITUCION = "Facultad de Contaduría y Administración"
-UNIVERSIDAD = "Universidad Autónoma Benito Juárez de Oaxaca"
+from modules.institucion import COORDINACION, CUERPO_ACADEMICO, FACULTAD
+
+_FACULTAD_HTML = FACULTAD.replace(" - ", "\u00a0- ")  # el guion se queda pegado a la palabra anterior al partir la línea
 # Los logos (./static) van incrustados en el HTML como data URI: así se ven igual en local, en Streamlit
 # Cloud (donde la app corre bajo una ruta distinta y una ruta absoluta hacia la carpeta static da 404) y detrás de
 # cualquier proxy. Pesan ~21 KB en total.
@@ -45,9 +46,10 @@ def _logo(clase: str, logo: tuple) -> str:
 
 
 def _marca() -> str:
-    """Un logo a cada lado y el nombre de la facultad al centro."""
+    """Un logo a cada lado y, al centro, la facultad, la coordinación y el cuerpo académico (tres líneas)."""
     return (f'<div class="marca">{_logo("fca", LOGO_FCA)}'
-            f'<span class="inst"><span class="kicker">{UNIVERSIDAD}</span><span class="nombre">{INSTITUCION}</span></span>'
+            f'<span class="inst"><span class="nombre">{_FACULTAD_HTML}</span><span class="coord">{COORDINACION}</span>'
+            f'<span class="area">{CUERPO_ACADEMICO}</span></span>'
             f'{_logo("gestion", LOGO_GESTION)}</div>')
 
 
@@ -67,7 +69,8 @@ def cabecera(tests: Sequence, paso: int) -> None:
         actual = ' aria-current="step"' if estado == "actual" else ""
         items.append(f'<li class="{estado}"{actual}><span class="punto" aria-hidden="true">{marca}</span>'
                      f'<span class="rotulo">{escape(r)}</span></li>')
-    st.html(f'<nav class="camino" aria-label="Progreso de la evaluación">{_marca()}'
+    compacta = " compacta" if 1 <= paso <= len(tests) else ""  # mientras contesta, en celular, la marca ocupa menos
+    st.html(f'<nav class="camino{compacta}" aria-label="Progreso de la evaluación">{_marca()}'
             f'<ol>{"".join(items)}</ol></nav>')
 
 
@@ -139,3 +142,39 @@ def frase_avance(registrados: int, terminaron: int, en_curso: int) -> None:
         parte(registrados, "alumno registrado", "alumnos registrados"),
         parte(terminaron, "terminó", "terminaron"),
         parte(en_curso, "en curso", "en curso")]) + '</p>')
+
+
+def _nombre_legible(nombre: str) -> str:
+    """La lista trae los nombres en MAYÚSCULAS; en pantalla se leen mejor con inicial mayúscula."""
+    return nombre.title() if nombre.isupper() else nombre
+
+
+def _mini_barra(hechas: int, total: int) -> str:
+    ancho = 100 * hechas / total if total else 0
+    clase = "completa" if total and hechas >= total else ""
+    return (f'<span class="mini {clase}" role="img" aria-label="{hechas} de {total}"><i style="width:{ancho:.0f}%"></i></span>'
+            f'<span class="cuenta">{hechas}<span class="de">/{total}</span></span>')
+
+
+def cabecera_lista(titulos_tests: Sequence[str]) -> None:
+    celdas = "".join(f"<span>{escape(t)}</span>" for t in titulos_tests)
+    st.html(f'<div class="al-grid al-cab" style="--tests:{len(titulos_tests)}"><span>Matrícula</span><span>Alumno</span>'
+            f'<span>Estado</span>{celdas}</div>')
+
+
+def fila_lista(matricula: str, nombre: str, estado: str, tono: str, tests: Sequence[tuple[int, int]] | None,
+               nota: str = "", n_tests: int = 2) -> None:
+    """Una fila de la lista de alumnos. `tests` = (contestadas, total) por test, o None si no se ha registrado."""
+    nota_html = f'<small class="{"alerta" if nota.startswith("Fuera") else ""}">{escape(nota)}</small>' if nota else ""
+    celdas = "".join(f'<span class="al-test">{_mini_barra(h, t)}</span>' for h, t in tests) if tests else \
+        '<span class="al-test vacio">—</span>' * n_tests
+    st.html(f'<div class="al-grid" style="--tests:{n_tests}"><span class="al-mat">{escape(matricula)}</span>'
+            f'<span class="al-nombre"><b>{escape(_nombre_legible(nombre))}</b>{nota_html}</span>'
+            f'<span><span class="chip {tono}">{escape(estado)}</span></span>{celdas}</div>')
+
+
+def ficha_reinicio(matricula: str, nombre: str, detalle: str, tests: Sequence[tuple[str, int, int]]) -> None:
+    """Encabezado del cuadro de reinicio: quién es y en qué va. tests = (título, contestadas, total)."""
+    filas = "".join(f'<li><span>{escape(t)}</span><span class="cuenta">{h}<span class="de">/{n}</span></span></li>' for t, h, n in tests)
+    st.html(f'<div class="rei-ficha"><p class="quien"><b>{escape(_nombre_legible(nombre))}</b><span>{escape(matricula)}</span></p>'
+            f'<p class="detalle">{escape(detalle)}</p><ul>{filas}</ul></div>')

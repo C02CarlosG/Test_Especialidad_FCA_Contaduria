@@ -56,7 +56,7 @@ def test_1() -> None:
                ("afinidad", 0, "Desarrollo Requerido")]
     instrucciones = ("Evalúa cada afirmación indicando qué tan identificado/a te sientes en tu desempeño "
                      "académico y profesional.")
-    base.escribir(DESTINO / "1_test_big_five.xlsx", "Test 1: The Big Five", instrucciones, esp, preguntas, escala,
+    base.escribir(DESTINO / "1_test_big_five.xlsx", "Test 1: Rasgos de la Personalidad", instrucciones, esp, preguntas, escala,
                   niveles, afinidades)
 
 

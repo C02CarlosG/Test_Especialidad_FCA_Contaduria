@@ -13,7 +13,9 @@ import streamlit as st
 
 from modules.acceso import Alumno
 from modules.graficas import grafica_campos, grafica_ocean
-from modules.interpretacion import ALCANCE, SUBTITULO_CIERRE, TITULO_CIERRE, Campo, Informe, lectura_campo
+from modules.institucion import REPORTE
+from modules.interpretacion import (ALCANCE, PIE_CAMPOS, SUBTITULO_CIERRE, SUBTITULO_INFORME, TITULO_CIERRE, Campo, Informe,
+                                    lectura_campo, nota_indice)
 from modules.reports import pct
 from views import tema
 
@@ -47,7 +49,8 @@ def mostrar(alumno: Alumno, informe: Informe, fecha: datetime, cache: dict) -> N
         return cache[clave]
 
     dom, com = informe.dominante, informe.complementario
-    _caja("cab", f'<h1>Reporte de Evaluación Integral</h1>'
+    _caja("cab", f'<h2>{escape(REPORTE)}</h2>'
+                 f'<p class="datos">{escape(SUBTITULO_INFORME)}</p>'
                  f'<p class="datos">{escape(alumno.nombre_completo)} · Matrícula {escape(alumno.matricula)} · '
                  f'Tutor: {escape(alumno.tutor)}</p><p class="folio">Fecha: {fecha.strftime("%d/%m/%Y")}</p>'
                  f'<div class="alcance"><b>Alcance del instrumento:</b> {escape(ALCANCE)}</div>')
@@ -57,15 +60,15 @@ def mostrar(alumno: Alumno, informe: Informe, fecha: datetime, cache: dict) -> N
         f'<div class="comp"><b>{escape(r.nombre)}</b> {escape(pct(r.porcentaje))} {tema.chip(r.nivel)}</div>'
         for r in informe.requeridos) or "<span class=et>Este campo no define rasgos.</span>"
     indice = f'{round(float(informe.indice) * 100)} % · {escape(informe.etiqueta_indice)}' if informe.indice is not None else "—"
-    explica = (f'{sum(r.alto for r in informe.requeridos)} de {len(informe.requeridos)} rasgos requeridos están en el nivel más alto.'
-               if informe.requeridos else "")
+    explica = (f'{sum(r.alto for r in informe.requeridos)} de {len(informe.requeridos)} rasgos requeridos están en el nivel más alto. '
+               f'{nota_indice(informe.indice)}' if informe.requeridos else "")
     complementario = (f'<div class="gr">{escape(com.nombre)}</div><div class="et">{escape(_campo_pts(com))}</div>'
                       if com else '<div class="gr">—</div>')
     chip_conf = {"alta": "alto", "buena": "alto", "moderada": "medio"}[informe.confianza]
     _caja("resumen", f'<div class="r4"><div><div class="et">Perfil vocacional dominante</div>'
                      f'<div class="gr">{escape(dom.nombre)}</div><div class="et">{escape(_campo_pts(dom))}</div></div>'
                      f'<div><div class="et">Campo formativo complementario</div>{complementario}</div>'
-                     f'<div><div class="et">Rasgos Big Five requeridos vs. obtenidos</div>{requeridos}</div>'
+                     f'<div><div class="et">RASGOS DE LA PERSONALIDAD requeridos vs. obtenidos</div>{requeridos}</div>'
                      f'<div><div class="et">Índice de alineación</div><div class="gr az">{indice}</div>'
                      f'<div class="et">{escape(explica)}</div></div></div>'
                      f'<div class="conf"><span class="chip {chip_conf}">Confianza {informe.confianza}</span>'
@@ -78,10 +81,10 @@ def mostrar(alumno: Alumno, informe: Informe, fecha: datetime, cache: dict) -> N
 
     c1, c2 = st.columns(2)
     for col, titulo, png, pie in (
-            (c1, "Resultados Big Five (OCEAN)", grafica('g_ocean', grafica_ocean),
+            (c1, "Resultados de Rasgos de la Personalidad", grafica('g_ocean', grafica_ocean),
              "Tus factores más altos son fortalezas conductuales; los más bajos, áreas con espacio para crecer."),
             (c2, "Orientación por campo formativo", grafica('g_campos', grafica_campos),
-             "En verde, el campo con más puntos en este test: un puntaje alto indica que realizas esas actividades con más autonomía. Es una guía orientativa, no determinista.")):
+             PIE_CAMPOS)):
         with col:
             st.html(f'<h3 class="inf-h3">{escape(titulo)}</h3>')
             if png:

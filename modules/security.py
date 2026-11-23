@@ -12,7 +12,24 @@ MAX_INTENTOS_MATRICULA = 5
 MAX_INTENTOS_CLIENTE = 100
 VENTANA_INTENTOS_MIN = 15
 
-_RE_MATRICULA = re.compile(r"[0-9]{6}")  # exactamente 6 dígitos (solo ASCII)
+MATRICULA_MAX = 10
+_RE_MATRICULA = re.compile(r"[0-9]{1,%d}" % MATRICULA_MAX)  # solo dígitos ASCII, sin largo fijo (hay matrículas de 5 y de 6)
+
+
+def matricula_valida(matricula: str) -> bool:
+    return bool(_RE_MATRICULA.fullmatch(matricula))
+
+
+CORREO_MAX = 254
+_RE_CORREO = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
+
+
+def normalizar_correo(valor: str) -> str:
+    return valor.strip().lower()
+
+
+def correo_valido(correo: str) -> bool:
+    return len(correo) <= CORREO_MAX and bool(_RE_CORREO.fullmatch(correo))
 
 
 EDAD_MINIMA = 18
@@ -43,7 +60,8 @@ def _nombre_ok(valor: str) -> bool:
 
 
 def validar_datos(apellido_paterno: str, apellido_materno: str, nombres: str,
-                  matricula: str, edad: int | None, tutor: str, semestre: int | None = None
+                  matricula: str, edad: int | None, tutor: str, semestre: int | None = None,
+                  *, correo: str, correo_confirmacion: str
                   ) -> tuple[dict[str, str | int], dict[str, str]]:
     """Devuelve (valores normalizados, errores por campo). Sin errores = dict vacío."""
     v: dict[str, str | int] = {
@@ -54,6 +72,7 @@ def validar_datos(apellido_paterno: str, apellido_materno: str, nombres: str,
         "tutor": normalizar_texto(tutor),
         "edad": edad if edad is not None else 0,
         "semestre": semestre if semestre is not None else 0,
+        "correo": normalizar_correo(correo),
     }
     errores: dict[str, str] = {}
     for campo, etiqueta in (("apellido_paterno", "el apellido paterno"),
@@ -62,7 +81,7 @@ def validar_datos(apellido_paterno: str, apellido_materno: str, nombres: str,
         if not _nombre_ok(str(v[campo])):
             errores[campo] = f"Escribe {etiqueta}."
     if not _RE_MATRICULA.fullmatch(str(v["matricula"])):
-        errores["matricula"] = "La matrícula debe tener exactamente 6 números."
+        errores["matricula"] = f"La matrícula debe tener solo números (hasta {MATRICULA_MAX})."
     if edad is None:
         errores["edad"] = "Escribe tu edad."
     elif edad < EDAD_MINIMA:
@@ -73,6 +92,10 @@ def validar_datos(apellido_paterno: str, apellido_materno: str, nombres: str,
         errores["semestre"] = "Elige tu semestre."
     if not _nombre_ok(str(v["tutor"])):
         errores["tutor"] = "Escribe el nombre de tu tutor u orientador."
+    if not correo_valido(str(v["correo"])):
+        errores["correo"] = "Escribe un correo válido, por ejemplo nombre@dominio.com."
+    elif v["correo"] != normalizar_correo(correo_confirmacion):
+        errores["correo"] = "Los correos no coinciden."
     return v, errores
 
 

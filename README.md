@@ -1,7 +1,7 @@
 # Evaluación Diagnóstica FCA · Contaduría Pública
 
 Aplicación web para que estudiantes mayores de edad de la Licenciatura en Contaduría Pública de la Facultad de Contaduría y Administración (UABJO)
-contesten, desde su celular, dos tests —**Test 1: The Big Five** y **Test 2: Especialidades Lic. en Contaduría Pública**— y
+contesten, desde su celular, dos tests —**Test 1: Rasgos de la Personalidad** y **Test 2: Especialidades Lic. en Contaduría Pública**— y
 reciban una guía de **qué especialidad podría convenirles**. El docente ve el avance de todos, descarga los
 reportes y genera el código QR de acceso.
 
@@ -14,7 +14,7 @@ Hecha con [Streamlit](https://streamlit.io) y [Supabase](https://supabase.com) (
 
 **Alumno** (en la raíz de la URL, pensado para el celular)
 
-1. Se registra: apellidos, nombre(s), matrícula (6 dígitos), semestre (del 1.º al 8.º), edad (mínimo 18), tutor, y acepta el aviso de privacidad.
+1. Se registra: apellidos, nombre(s), matrícula (solo números), semestre (del 1.º al 8.º), edad (mínimo 18), tutor, y acepta el aviso de privacidad.
 2. Contesta los tests **en orden**, en bloques de 10 preguntas, con barra de avance. **Todas las preguntas son
    obligatorias**; cada bloque se guarda al continuar.
 3. Si recarga la página, vuelve a escribir su matrícula y nombre y **continúa donde se quedó**.
@@ -34,8 +34,13 @@ Hecha con [Streamlit](https://streamlit.io) y [Supabase](https://supabase.com) (
 
 ## Reglas importantes
 
-- **No hay lista de matrículas autorizadas:** entra cualquier matrícula de 6 dígitos, y quien tenga el QR puede
-  registrarse. Si en el piloto aparecen matrículas desconocidas, el siguiente paso es agregar esa lista.
+- **El acceso está limitado a una lista de matrículas autorizadas** (tabla `alumnos_autorizados`, 5.º semestre).
+  Quien tenga el QR pero no esté en la lista no entra, y cada intento cuenta como fallido. Para cargarla:
+  ejecuta [`sql/04_alumnos_autorizados.sql`](sql/04_alumnos_autorizados.sql) en Supabase y luego
+  `python scripts/importar_alumnos_autorizados.py "ALUMNOS DE 5o. SEMESTRE Licenciatura.md"` (agrega
+  `--reemplazar` para quitar a quienes ya no estén en el archivo). Hay dos accesos de prueba, `000001` y `000002`
+  (estatus `PRUEBA`), que `--reemplazar` conserva; al escribir la matrícula, el registro llena solo el nombre y el semestre. El archivo tiene nombres y matrículas, por eso
+  está en `.gitignore`: no lo subas al repositorio.
 - Una matrícula se registra **una sola vez**. Si sigue «en curso», se reanuda con la misma matrícula y el mismo
   nombre; con otro nombre se rechaza y cuenta como intento fallido (5 por matrícula y 100 por equipo cada 15 min).
 - «Sin experiencia» (SE, solo en el Test 2) es un dato faltante: no suma ni cuenta como 0.
@@ -56,6 +61,10 @@ seguridad por filas sin políticas públicas: nadie puede leer ni escribir con l
 `service_role key` desde el servidor.
 
 > Esta base es nueva, así que **no** necesitas `sql/03_semestre.sql` (el esquema ya incluye `semestre`).
+
+> `sql/00_instalacion_completa.sql` ya incluye la lista de alumnos autorizados, el correo y el estado del envío del
+> reporte (equivale a `04`, `05` y `06`); no los ejecutes aparte en una base nueva. Después carga la lista de alumnos
+> con `scripts/importar_alumnos_autorizados.py` (ver más abajo).
 
 **2. Secretos.** Copia la plantilla y llena los valores (el archivo real está en `.gitignore`):
 
@@ -163,10 +172,23 @@ casos recalculados en LibreOffice (`scripts/generar_golden_scoring.py`, `tests/g
 | **Durante** | En `/admin → Avance` ves quién va en qué test. «Actualizar datos» recarga la tabla. |
 | **Después** | Descarga el **Excel concentrado**: su hoja «Respuestas» respalda toda la base. Entrega a cada alumno su PDF (o el ZIP) y, si quieres, pulsa «Guardar los resultados» para copiarlos a la tabla `resultados`. |
 
+## Envío automático del reporte por correo
+
+Al terminar el último test, el alumno recibe su PDF en el correo que escribió al registrarse (lo pide dos veces para
+evitar errores). El envío usa SMTP desde una cuenta de Gmail creada para esto; configúrala en la sección `[correo]`
+de los secretos (ver `.streamlit/secrets.toml.example`: verificación en dos pasos y *contraseña de aplicación*).
+
+- **Sin la sección `[correo]`** el envío queda desactivado; el alumno igual descarga su PDF.
+- **Si `MOSTRAR_RESULTADO_AL_ALUMNO` es `false`** no se envía al terminar: la coordinación lo hace desde `/admin`.
+- **Estado por alumno** (`pendiente`, `enviando`, `enviado`, `error`): se ve bajo su nombre en `/admin`. El botón
+  **Enviar reportes pendientes** reintenta los fallidos y envía los que faltan. Un reporte no sale dos veces.
+- **«Rehacer el Test N»** devuelve el envío a `pendiente`: el PDF nuevo se manda al terminar de nuevo.
+- Los alumnos que terminaron antes de pedir el correo aparecen como «Sin correo» y no reciben envío.
+
 ## Privacidad y datos personales
 
 - **Qué se guarda:** apellidos, nombre(s), matrícula, semestre, edad, tutor, fecha y hora de aceptación del aviso, y las
-  respuestas a los tests. **No se pide correo.** Para limitar intentos fallidos se guarda un *hash* de la IP del
+  respuestas a los tests. **El correo se pide solo para enviarle su reporte en PDF** (ver abajo). Para limitar intentos fallidos se guarda un *hash* de la IP del
   equipo (no la IP), que es seudonimización, no anonimato.
 - **Quién accede:** solo el docente con la contraseña del panel. Las tablas tienen seguridad por filas activa y
   sin políticas públicas; la clave de servidor vive únicamente en los secretos de Streamlit.
@@ -208,7 +230,7 @@ views/                  pantallas: alumno.py, test.py, informe.py (hoja de resul
 modules/                lógica: acceso, avance, scoring, interpretacion, graficas, panel, reports, reports_admin, admin_auth,
                         security, qr_utils, config_loader, db (única capa que habla con Supabase)
 config/                 aviso_privacidad.md y tests/*.xlsx
-sql/                    00_instalacion_completa.sql (todo en uno), 01_esquema.sql, 02_rls.sql y 03_semestre.sql
+sql/                    00_instalacion_completa.sql (todo en uno: esquema, seguridad, alumnos autorizados, correo y envío); 01 a 06 son los pasos sueltos
 static/                 logos y tipografías, servidos con enableStaticServing
 scripts/                conversión de las calculadoras y generación de los casos de verificación
 tests/                  pruebas automáticas (golden/ = casos calculados con las hojas de Excel)

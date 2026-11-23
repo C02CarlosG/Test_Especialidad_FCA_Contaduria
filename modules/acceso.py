@@ -2,12 +2,12 @@
 sola vez por matrícula. Habla con la BD solo a través de `Repositorio` (en producción
 `db.SupabaseRepo`; en pruebas, un doble en memoria).
 
-No hay código de grupo ni lista de matrículas autorizadas: entra cualquier matrícula con
-formato válido. Quien tenga el QR puede registrarse; ese riesgo se acepta de forma explícita.
+El acceso está limitado a la lista de matrículas autorizadas (tabla `alumnos_autorizados`):
+con el QR solo entra quien está en la lista. No hay código de grupo.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timedelta, timezone
 from typing import Protocol
 
@@ -28,6 +28,9 @@ class Alumno:
     estado: str  # en_curso | terminado
     creado_en: datetime | None = None  # solo lo llenan las consultas del panel del docente
     semestre: int | None = None  # None en los alumnos registrados antes de pedirlo
+    correo: str | None = None  # None en los alumnos registrados antes de pedirlo
+    reporte_estado: str = "pendiente"  # pendiente | enviando | enviado | error (envío del PDF por correo)
+    reporte_error: str | None = None
 
     @property
     def nombre_completo(self) -> str:
@@ -44,6 +47,8 @@ class DatosAcceso:
     tutor: str
     acepto_privacidad: bool
     semestre: int | None = None
+    correo: str = ""
+    correo_confirmacion: str = ""
 
 
 @dataclass(frozen=True)
@@ -59,10 +64,12 @@ class MatriculaDuplicada(Exception):
 class Repositorio(Protocol):
     def contar_intentos(self, tipo: str, clave: str, desde: datetime) -> int: ...
     def registrar_intento(self, tipo: str, clave: str) -> None: ...
+    def nombre_autorizado(self, matricula: str) -> str | None: ...  # None = no está en la lista
     def obtener_alumno_por_matricula(self, matricula: str) -> Alumno | None: ...
     def crear_alumno(self, apellido_paterno: str, apellido_materno: str, nombres: str,
                      matricula: str, edad: int, tutor: str, acepto_en: datetime,
-                     semestre: int | None = None) -> Alumno: ...
+                     semestre: int | None = None, correo: str | None = None) -> Alumno: ...
+    def actualizar_datos(self, alumno_id: str, edad: int, tutor: str, semestre: int, correo: str) -> None: ...
 
 
 class AccesoError(Exception):
@@ -95,6 +102,40 @@ class MatriculaNoDisponible(AccesoError):
         )
 
 
+class MatriculaNoAutorizada(AccesoError):
+    def __init__(self) -> None:
+        super().__init__(
+            "Tu matrícula no está en la lista de alumnos autorizados. Revisa que la hayas escrito "
+            "bien; si es correcta, avisa a tu tutor."
+        )
+
+
+_PARTICULAS = {"DE", "DEL", "LA", "LAS", "LOS", "Y", "SAN", "SANTA", "MC", "VAN", "VON"}
+
+
+def separar_nombre(nombre: str) -> tuple[str, str, str]:
+    """Separa «PATERNO MATERNO NOMBRE(S)» (como viene en la lista) en (paterno, materno, nombres).
+
+    Es una aproximación: respeta las partículas («DE LA VEGA») y las palabras con guion, pero con
+    solo tres palabras no hay forma de saber si falta un apellido o un nombre. Por eso el alumno
+    ve los campos llenos y puede corregirlos."""
+    t = nombre.split()
+
+    def apellido(i: int) -> tuple[str, int]:
+        j = i
+        while j < len(t) - 1 and t[j].upper() in _PARTICULAS:
+            j += 1
+        return " ".join(t[i:j + 1]), j + 1
+
+    if not t:
+        return "", "", ""
+    paterno, i = apellido(0)
+    materno = ""
+    if i < len(t) - 1:  # siempre debe quedar al menos una palabra para el nombre
+        materno, i = apellido(i)
+    return paterno.title(), materno.title(), " ".join(t[i:]).title()
+
+
 def _mismo_nombre(alumno: Alumno, v: dict) -> bool:
     """Segundo dato (además de la matrícula) para reanudar un test en curso."""
     return ((alumno.apellido_paterno.casefold(), alumno.apellido_materno.casefold(),
@@ -113,10 +154,45 @@ def _registrar_fallo(repo: Repositorio, clave_mat: str, clave_cli: str) -> None:
     repo.registrar_intento(TIPO_INTENTO, clave_cli)
 
 
+def _verificar_no_bloqueado(repo: Repositorio, clave_mat: str, clave_cli: str, ahora: datetime) -> None:
+    if (_intentos_en_ventana(repo, clave_mat, ahora) >= sec.MAX_INTENTOS_MATRICULA
+            or _intentos_en_ventana(repo, clave_cli, ahora) >= sec.MAX_INTENTOS_CLIENTE):
+        raise AccesoBloqueado()
+
+
+def buscar_autorizado(repo: Repositorio, matricula: str, cliente_ip: str,
+                      ahora: datetime | None = None) -> str | None:
+    """Nombre del alumno en la lista (para llenar el registro al escribir la matrícula), o None.
+
+    Una matrícula que no está en la lista cuenta como intento fallido, igual que al registrarse: así
+    nadie puede recorrer matrículas para averiguar nombres. Lanza AccesoBloqueado si ya se bloqueó."""
+    ahora = ahora or datetime.now(timezone.utc)
+    m = sec.normalizar_matricula(matricula)
+    if not sec.matricula_valida(m):
+        return None
+    clave_mat, clave_cli = sec.clave_matricula(m), sec.clave_cliente(cliente_ip)
+    _verificar_no_bloqueado(repo, clave_mat, clave_cli, ahora)
+    nombre = repo.nombre_autorizado(m)
+    if nombre is None:
+        _registrar_fallo(repo, clave_mat, clave_cli)
+    return nombre
+
+
+def _con_datos_nuevos(repo: Repositorio, existente: Alumno, v: dict[str, str | int]) -> Alumno:
+    """Al reanudar (p. ej. tras reiniciar un test) vale lo que el alumno acaba de escribir: edad, tutor,
+    semestre y correo se actualizan si cambiaron. El nombre no, porque es lo que identifica a quien reanuda."""
+    edad, tutor, semestre, correo = int(v["edad"]), str(v["tutor"]), int(v["semestre"]), str(v["correo"])
+    if (edad, tutor, semestre, correo) == (existente.edad, existente.tutor, existente.semestre, existente.correo):
+        return existente
+    repo.actualizar_datos(existente.id, edad, tutor, semestre, correo)
+    return replace(existente, edad=edad, tutor=tutor, semestre=semestre, correo=correo)
+
+
 def iniciar_acceso(repo: Repositorio, datos: DatosAcceso, cliente_ip: str,
                    ahora: datetime | None = None) -> ResultadoAcceso:
     """Valida y registra al alumno. Lanza AccesoError (o subclase) si no puede entrar.
 
+    - Una matrícula fuera de la lista autorizada se rechaza y cuenta como intento fallido.
     - Un alumno nuevo queda registrado.
     - Una matrícula ya terminada, o en curso pero con otro nombre, se rechaza.
     - Una matrícula en curso con el mismo nombre reanuda (la sesión del navegador pudo
@@ -128,21 +204,24 @@ def iniciar_acceso(repo: Repositorio, datos: DatosAcceso, cliente_ip: str,
     if not datos.acepto_privacidad:
         raise AccesoError("Debes aceptar el aviso de privacidad para continuar.")
     v, errores = sec.validar_datos(datos.apellido_paterno, datos.apellido_materno, datos.nombres,
-                                   datos.matricula, datos.edad, datos.tutor, datos.semestre)
+                                   datos.matricula, datos.edad, datos.tutor, datos.semestre,
+                                   correo=datos.correo, correo_confirmacion=datos.correo_confirmacion)
     if errores:
         raise DatosInvalidos(errores)
 
     clave_mat = sec.clave_matricula(str(v["matricula"]))
     clave_cli = sec.clave_cliente(cliente_ip)
     # El bloqueo se revisa antes de consultar nada más, para que no sirva de oráculo.
-    if (_intentos_en_ventana(repo, clave_mat, ahora) >= sec.MAX_INTENTOS_MATRICULA
-            or _intentos_en_ventana(repo, clave_cli, ahora) >= sec.MAX_INTENTOS_CLIENTE):
-        raise AccesoBloqueado()
+    _verificar_no_bloqueado(repo, clave_mat, clave_cli, ahora)
+
+    if repo.nombre_autorizado(str(v["matricula"])) is None:
+        _registrar_fallo(repo, clave_mat, clave_cli)  # también frena a quien prueba matrículas al azar
+        raise MatriculaNoAutorizada()
 
     existente = repo.obtener_alumno_por_matricula(str(v["matricula"]))
     if existente is not None:
         if existente.estado == "en_curso" and _mismo_nombre(existente, v):
-            return ResultadoAcceso(existente, reanudado=True)
+            return ResultadoAcceso(_con_datos_nuevos(repo, existente, v), reanudado=True)
         if existente.estado != "terminado":  # intento de entrar con datos ajenos
             _registrar_fallo(repo, clave_mat, clave_cli)
         raise MatriculaNoDisponible()
@@ -150,7 +229,8 @@ def iniciar_acceso(repo: Repositorio, datos: DatosAcceso, cliente_ip: str,
     try:
         alumno = repo.crear_alumno(
             str(v["apellido_paterno"]), str(v["apellido_materno"]), str(v["nombres"]),
-            str(v["matricula"]), int(v["edad"]), str(v["tutor"]), ahora, semestre=int(v["semestre"]))
+            str(v["matricula"]), int(v["edad"]), str(v["tutor"]), ahora, semestre=int(v["semestre"]),
+            correo=str(v["correo"]))
     except MatriculaDuplicada:  # dos envíos simultáneos con la misma matrícula
         raise MatriculaNoDisponible() from None
     return ResultadoAcceso(alumno, reanudado=False)
